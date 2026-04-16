@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Closet Godín</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2744;--navy-l:#243156;--cream:#f5f0e8;--cream-d:#ede6d8;--gold:#c9a84c;--gold-l:#e8c97a;--slate:#5a6478;--olive:#4a5c3a;--white:#fff;--text:#1a2744}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh}
+.header{background:var(--navy);padding:20px 24px 16px;position:sticky;top:0;z-index:100}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--gold)}
+.logo span{color:var(--cream);font-style:italic}
+.date-badge{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--gold-l);font-weight:500}
+.week-selector{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.week-selector::-webkit-scrollbar{display:none}
+.week-btn{flex-shrink:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.week-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.week-btn.active{background:var(--gold);border-color:var(--gold);color:var(--navy);font-weight:600}
+.today-section{padding:20px 16px 0}
+.section-label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--slate);margin-bottom:10px}
+.today-card{background:var(--navy);border-radius:16px;padding:20px;color:#fff;position:relative;overflow:hidden}
+.today-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(201,168,76,.15) 0%,transparent 70%);border-radius:50%}
+.today-day{font-family:'DM Serif Display',serif;font-size:28px;color:var(--gold);line-height:1;margin-bottom:4px}
+.style-badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:10px;margin-bottom:16px}
+.b-ej{background:rgba(201,168,76,.2);color:var(--gold-l)}.b-sm{background:rgba(90,100,120,.3);color:#a0b0d0}.b-ca{background:rgba(74,92,58,.3);color:#8fb07a}.b-el{background:rgba(139,58,42,.2);color:#d4886a}.b-vi{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+.today-items{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.t-item{background:rgba(255,255,255,.07);border-radius:10px;padding:10px 12px}
+.t-icon{font-size:16px;margin-bottom:4px}
+.t-label{font-size:10px;color:rgba(255,255,255,.45);font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.t-val{font-size:12px;color:rgba(255,255,255,.9);font-weight:500;line-height:1.3;margin-top:2px}
+.today-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;font-style:italic;border-top:1px solid rgba(255,255,255,.08);padding-top:12px}
+.week-section{padding:20px 16px}
+.sec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sec-title{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--slate)}
+.sec-sub{font-family:'DM Serif Display',serif;font-size:14px;color:var(--navy)}
+.drag-hint{font-size:10px;color:var(--slate);text-align:center;padding:6px;margin-bottom:8px;background:rgba(26,39,68,.04);border-radius:8px;opacity:.7}
+.day-card{background:#fff;border-radius:12px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(26,39,68,.08);transition:transform .15s,box-shadow .15s;cursor:grab}
+.day-card:active{cursor:grabbing}
+.day-card.today-hl{border:2px solid var(--gold);box-shadow:0 0 0 4px rgba(201,168,76,.1)}
+.day-card.friday{background:#f8fdf5;border-color:rgba(74,92,58,.15)}
+.day-card.dragging{opacity:.4;transform:scale(.98)}
+.day-card.drag-over{border:2px dashed var(--gold);background:#fffbf0;transform:scale(1.01)}
+.day-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;border-bottom:1px solid rgba(26,39,68,.05)}
+.day-header-left{cursor:pointer;flex:1}
+.day-name{font-family:'DM Serif Display',serif;font-size:16px;color:var(--navy)}
+.today-hl .day-name{color:var(--gold)}.friday .day-name{color:var(--olive)}
+.day-date{font-size:11px;color:var(--slate)}
+.drag-handle{cursor:grab;padding:4px 8px;color:rgba(26,39,68,.25);font-size:16px;flex-shrink:0}
+.drag-handle:hover{color:rgba(26,39,68,.5)}
+.style-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-left:6px}
+.d-ej{background:var(--gold)}.d-sm{background:#4a6fa5}.d-ca{background:var(--olive)}.d-el{background:#8b3a2a}.d-vi{background:#888}
+.day-body{padding:10px 14px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini-label{font-size:9px;color:var(--slate);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.mini-val{font-size:11px;color:var(--navy);font-weight:500;margin-top:1px;line-height:1.3}
+.day-extra{display:none;padding:0 14px 14px;border-top:1px solid rgba(26,39,68,.05);padding-top:10px}
+.day-card.open .day-extra{display:block}
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.exp-label{font-size:9px;color:var(--slate);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.exp-val{font-size:11px;color:var(--navy);font-weight:500;margin-top:2px;line-height:1.3}
+.day-desc-txt{font-size:11px;color:var(--slate);line-height:1.5;font-style:italic;background:var(--cream);padding:8px 10px;border-radius:8px;margin-bottom:8px}
+.lavar-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px}
+.lavar-y{background:#d4edda;color:#2d6a3f}.lavar-n{background:#f0f0f0;color:#888}
+.suggest-btn{display:flex;align-items:center;gap:6px;margin-top:10px;background:var(--navy);color:var(--gold);border:none;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%}
+.suggest-btn:hover{background:var(--navy-l)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,16,35,.7);z-index:999;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--cream);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:24px 20px 32px}
+.modal-handle{width:40px;height:4px;background:rgba(26,39,68,.2);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--navy);margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--slate);margin-bottom:20px}
+.modal-day-info{background:var(--navy);border-radius:12px;padding:14px 16px;margin-bottom:20px;color:#fff}
+.modal-day-name{font-family:'DM Serif Display',serif;font-size:18px;color:var(--gold);margin-bottom:8px}
+.modal-current{font-size:11px;color:rgba(255,255,255,.6);line-height:1.8}
+.unavail-label{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px}
+.unavail-input{width:100%;border:1.5px solid rgba(26,39,68,.15);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--navy);background:#fff;resize:none;min-height:70px;outline:none}
+.unavail-input:focus{border-color:var(--gold)}
+.gen-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed}
+.suggestions-section{margin-top:20px}
+.sug-label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--slate);margin-bottom:12px}
+.sug-card{background:#fff;border-radius:12px;border:2px solid transparent;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.sug-card:hover{border-color:var(--gold)}
+.sug-card.selected{border-color:var(--gold);background:#fffbf0}
+.sug-num{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.sug-style{font-family:'DM Serif Display',serif;font-size:15px;color:var(--navy);margin-bottom:8px}
+.sug-items{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.sug-item-label{font-size:9px;color:var(--slate);text-transform:uppercase;font-weight:600}
+.sug-item-val{font-size:11px;color:var(--navy);font-weight:500;line-height:1.3;margin-top:1px}
+.sug-desc{font-size:11px;color:var(--slate);font-style:italic;line-height:1.4;border-top:1px solid rgba(26,39,68,.06);padding-top:8px}
+.apply-btn{width:100%;background:var(--navy);color:var(--gold);border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px;display:none}
+.apply-btn.visible{display:block}
+.close-btn{width:100%;background:transparent;color:var(--slate);border:1px solid rgba(26,39,68,.15);border-radius:10px;padding:10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px}
+.loading-dots{display:none;text-align:center;padding:24px;color:var(--slate);font-size:13px}
+.loading-dots.show{display:block}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin:0 3px;animation:bounce .8s infinite}
+.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+.error-msg{background:#fff0f0;border:1px solid #ffcccc;border-radius:8px;padding:10px 14px;font-size:12px;color:#c0392b;margin-top:10px;display:none}
+.error-msg.show{display:block}
+.prep-section{margin:0 16px 16px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid rgba(26,39,68,.08)}
+.prep-header{background:var(--navy);padding:12px 16px;display:flex;align-items:center;gap:8px}
+.prep-title{font-size:13px;font-weight:600;color:var(--gold)}
+.prep-body{padding:14px 16px}
+.prep-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(26,39,68,.05);gap:12px}
+.prep-row:last-child{border-bottom:none}
+.prep-cat{font-size:11px;font-weight:600;color:var(--navy);min-width:90px;flex-shrink:0}
+.prep-items{font-size:11px;color:var(--slate);line-height:1.5;text-align:right}
+
+/* PANTALON TRACKER */
+.pant-tracker{margin-top:16px;border-top:1px solid rgba(26,39,68,.08);padding-top:14px}
+.pant-tracker-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--navy);margin-bottom:12px}
+.pant-row{background:var(--cream);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.pant-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pant-name{font-size:12px;color:var(--navy);font-weight:600}
+.pant-status{font-size:10px;font-weight:700;padding:2px 10px;border-radius:8px}
+.st-ok{background:#e8f5e9;color:#2d6a3f}
+.st-soon{background:#fff3cd;color:#856404}
+.st-wash{background:#f8d7da;color:#842029}
+.pant-controls{display:flex;align-items:center;gap:8px}
+.use-dots{display:flex;gap:4px;flex:1}
+.use-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(26,39,68,.15);background:var(--cream-d);cursor:pointer;transition:all .15s;flex-shrink:0}
+.use-dot.used{background:var(--navy);border-color:var(--navy)}
+.use-dot.warn{background:var(--gold);border-color:var(--gold)}
+.use-dot:hover{transform:scale(1.2)}
+.pant-add-btn{background:var(--navy);color:var(--gold);border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0}
+.pant-add-btn:disabled{opacity:.35;cursor:not-allowed}
+.pant-wash-btn{background:transparent;color:var(--slate);border:1px solid rgba(26,39,68,.2);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0}
+.pant-wash-btn:hover{background:#d4edda;color:#2d6a3f;border-color:#2d6a3f}
+
+.config-bar{margin:16px 16px 0;background:#fff;border-radius:12px;padding:14px 16px;border:1px solid rgba(26,39,68,.08);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.config-label{font-size:12px;color:var(--slate);font-weight:500;flex-shrink:0}
+.config-input{border:1px solid rgba(26,39,68,.15);border-radius:8px;padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--cream);flex:1;min-width:130px}
+.config-btn{background:var(--navy);color:var(--gold);border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.applied-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:#d4edda;color:#2d6a3f;margin-left:6px}
+.swapped-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:#fff3cd;color:#856404;margin-left:6px}
+.bottom-spacer{height:40px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top"><div class="logo">Closet <span>Godín</span></div><div class="date-badge" id="todayBadge">—</div></div>
+  <div class="week-selector" id="weekSelector"></div>
+</div>
+<div class="config-bar">
+  <span class="config-label">📅 Inicio Foxconn:</span>
+  <input type="date" class="config-input" id="startDate">
+  <button class="config-btn" onclick="applyStart()">Aplicar</button>
+</div>
+<div class="today-section" style="margin-top:16px">
+  <div class="section-label">Outfit de hoy</div>
+  <div class="today-card">
+    <div class="today-day" id="todayDayName">—</div>
+    <div id="todayStyleBadge"></div>
+    <div class="today-items" id="todayItems"></div>
+    <div class="today-desc" id="todayDesc"></div>
+  </div>
+</div>
+<div class="week-section">
+  <div class="sec-header"><span class="sec-title">Plan semanal</span><span class="sec-sub" id="weekSubtitle"></span></div>
+  <div class="drag-hint">☰ Arrastra los días para reorganizar</div>
+  <div id="weekCards"></div>
+</div>
+<div class="prep-section">
+  <div class="prep-header"><span>🧺</span><span class="prep-title">Preparación del fin de semana</span></div>
+  <div class="prep-body" id="prepBody"></div>
+</div>
+<div class="bottom-spacer"></div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Sugerir alternativa</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="modal-day-info" id="modalDayInfo"></div>
+    <div class="unavail-label">¿Qué no tienes disponible o no quieres usar?</div>
+    <textarea class="unavail-input" id="unavailInput" placeholder="Ej: La camisa blanca está en lavandería, no quiero usar el vino hoy..."></textarea>
+    <button class="gen-btn" id="genBtn" onclick="generateSuggestions()">✨ Generar alternativas</button>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="loading-dots" id="loadingDots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><br><span style="margin-top:8px;display:inline-block">Armando opciones con tu guardarropa...</span></div>
+    <div class="suggestions-section" id="suggestionsSection" style="display:none">
+      <div class="sug-label">Elige tu alternativa</div>
+      <div id="sugCards"></div>
+      <button class="apply-btn" id="applyBtn" onclick="applySelected()">Aplicar outfit seleccionado</button>
+    </div>
+    <button class="close-btn" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+const WARDROBE={
+  camisas:[
+    {id:"CAM-001",desc:"Oxford Blanca El Ganso"},{id:"CAM-002",desc:"Camisa Gris Banana Republic"},
+    {id:"CAM-003",desc:"Lino Gris Claro Celio"},{id:"CAM-004",desc:"Azul Oscuro Celio manga corta"},
+    {id:"CAM-006",desc:"Azul Claro BC GAP"},{id:"CAM-007",desc:"Camisa Negra H&M"},
+    {id:"CAM-008",desc:"Camisa Botella Zara"},{id:"CAM-009",desc:"Gris Azulado El Ganso"},
+    {id:"CAM-010",desc:"Azul Claro Banana Republic"},{id:"CAM-011",desc:"Polo Blanco El Pulpo"},
+    {id:"CAM-012",desc:"Polo Negro GAP"},{id:"CAM-013",desc:"Polo Caqui Retro con cierre"},
+    {id:"CAM-015",desc:"Playera Negra Mango"},{id:"CAM-016",desc:"Playera Naranja Tostado Mango"},
+    {id:"CAM-017",desc:"Jersey Negro Mango Coolmax"},{id:"CAM-018",desc:"Playera Malva El Ganso"},
+    {id:"CAM-019",desc:"Oversized Azul Abercrombie"}
+  ],
+  pantalones:[
+    {id:"PAN-001",desc:"Chino Azul Ligero GAP",maxUsos:3,restrict:false},
+    {id:"PAN-002",desc:"Naranja Tostado Mango",maxUsos:3,restrict:true,restrictNote:"No fajado, sin cinturón"},
+    {id:"PAN-003",desc:"Chino Vino Ferrioni",maxUsos:3,restrict:true,restrictNote:"No fajado, sin cinturón"},
+    {id:"PAN-004",desc:"Verde Olivo Benetton",maxUsos:3,restrict:false},
+    {id:"PAN-005",desc:"Negro Benetton",maxUsos:3,restrict:false},
+    {id:"PAN-006",desc:"Jogger Verde Olivo GAP",maxUsos:2,restrict:false},
+    {id:"PAN-007",desc:"Jogger Negro GAP",maxUsos:2,restrict:false},
+    {id:"PAN-008",desc:"Azul Oscuro GAP Chino",maxUsos:3,restrict:false}
+  ],
+  cinturones:[
+    {id:"EXT-003",desc:"Negro Piel — ejecutivo con loafer"},
+    {id:"EXT-004",desc:"Café Piel — siempre con serraje marrón"},
+    {id:"EXT-005",desc:"Tejido Negro/Gris — viernes y casuales"}
+  ],
+  relojes:[
+    {id:"CA0430",desc:"Cronógrafo Azul Acero — Lun-Mié"},
+    {id:"BU2110",desc:"Carátula Blanca Piel Gris — Lun y Jue ejecutivos"},
+    {id:"FITBIT",desc:"Fitbit Sense 2 — Solo viernes"}
+  ]
+};
+
+// S1-Lun: PAN-008 (was PAN-003), S1-Mar: PAN-001 (was PAN-002 fajada)
+// S2-Lun: PAN-008 (was PAN-003 fajada)
+// PAN-002 y PAN-003 quedan en looks desfajados únicamente
+const WEEKS=[
+  {label:"Semana 1",subtitle:"Arranque Fuerte",days:[
+    {day:"Lunes",style:"ejecutivo",camisa:"CAM-001 Oxford Blanca (El Ganso) fajada",pantalon:"PAN-008 Azul Oscuro (GAP Chino)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"EXT-004 Café Piel",reloj:"BU2110 — Carátula blanca, piel gris",extra:"—",desc:"Oxford blanca fajada + azul oscuro + serraje + café. Estrena el PAN-008. Look ejecutivo muy limpio.",lavar:false},
+    {day:"Martes",style:"smart",camisa:"CAM-006 Azul Claro BC (GAP) fajada",pantalon:"PAN-001 Chino Azul Ligero (GAP)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"EXT-003 Negro Piel",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Paleta azul monocromática — claro arriba, ligero abajo. CA0430 conecta con la camisa.",lavar:false},
+    {day:"Miércoles",style:"casual",camisa:"CAM-003 Lino Gris abierta + CAM-016 Playera Naranja",pantalon:"PAN-005 Negro Benetton (Recto)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"— (desfajado)",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Layer de lino con naranja tostado. Paleta tierra con acento. Fresco para Guadalajara.",lavar:false},
+    {day:"Jueves",style:"elevated",camisa:"CAM-009 Gris Azulado (El Ganso)",pantalon:"PAN-005 Negro Benetton (Recto)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"EXT-003 Negro Piel",reloj:"BU2110 — Carátula blanca, piel gris",extra:"—",desc:"Gris azulado + negro + loafer + BU2110. Sofisticado con profundidad tonal.",lavar:false},
+    {day:"Viernes",style:"viernes",camisa:"CAM-004 Azul Oscuro abierta + CAM-015 Playera Negra",pantalon:"PAN-007 Jogger Negro (GAP)",zapatos:"ZAP-003 Converse Negro Bota",cinturon:"EXT-005 Tejido Negro/Gris",reloj:"Fitbit Sense 2",extra:"—",desc:"Todo en familia oscura. Relajado pero coherente. Viernes modo on.",lavar:true}
+  ]},
+  {label:"Semana 2",subtitle:"Consolidando Presencia",days:[
+    {day:"Lunes",style:"ejecutivo",camisa:"CAM-002 Camisa Gris (Banana Republic) fajada",pantalon:"PAN-008 Azul Oscuro (GAP Chino)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"EXT-003 Negro Piel",reloj:"BU2110 — Carátula blanca, piel gris",extra:"—",desc:"Gris fajada + azul oscuro + loafer + negro piel + BU2110. Look muy ejecutivo.",lavar:false},
+    {day:"Martes",style:"smart",camisa:"CAM-008 Camisa Botella (Zara)",pantalon:"PAN-002 Naranja Tostado (Mango)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"— (desfajado)",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Verde botella desfajada + naranja tostado + serraje. Atrevido pero sofisticado.",lavar:false},
+    {day:"Miércoles",style:"casual",camisa:"CAM-017 Jersey Negro (Mango Coolmax)",pantalon:"PAN-005 Negro Benetton (Recto)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"EXT-004 Café Piel",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Negro total con serraje marrón + café. Paleta oscura-tierra.",lavar:false},
+    {day:"Jueves",style:"elevated",camisa:"CAM-010 Azul Claro desfajada (Banana Republic)",pantalon:"PAN-004 Verde Olivo Recto (Benetton)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"— (desfajada)",reloj:"BU2110 — Carátula blanca, piel gris",extra:"EXT-002 Sobrecamisa Verde Nike abierta",desc:"Azul + olivo + Nike abierta. Look con capas y movimiento.",lavar:false},
+    {day:"Viernes",style:"viernes",camisa:"CAM-013 Polo Caqui Retro (con cierre)",pantalon:"PAN-007 Jogger Negro (GAP)",zapatos:"ZAP-004 Converse Blanco Choclo",cinturon:"EXT-005 Tejido Negro/Gris",reloj:"Fitbit Sense 2",extra:"—",desc:"Polo retro caqui + jogger negro + Converse blanco. Viernes con personalidad.",lavar:true}
+  ]},
+  {label:"Semana 3",subtitle:"Rotación Inteligente",days:[
+    {day:"Lunes",style:"ejecutivo",camisa:"CAM-001 Oxford Blanca (El Ganso) fajada",pantalon:"PAN-004 Verde Olivo Recto (Benetton)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"EXT-003 Negro Piel",reloj:"BU2110 — Carátula blanca, piel gris",extra:"—",desc:"Blanco fajada + verde olivo + loafer. Clásico renovado.",lavar:false},
+    {day:"Martes",style:"smart",camisa:"CAM-012 Polo Negro (GAP)",pantalon:"PAN-005 Negro Benetton (Recto)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"— (polo, sin fajar)",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Negro total + loafer bordón. Minimalismo con carácter.",lavar:false},
+    {day:"Miércoles",style:"casual",camisa:"CAM-011 Polo Blanco (El Pulpo)",pantalon:"PAN-001 Chino Azul Ligero (GAP)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"— (polo, sin fajar)",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Polo blanco + chino azul + loafer. Paleta limpia y fresca.",lavar:false},
+    {day:"Jueves",style:"elevated",camisa:"CAM-006 Azul Claro BC (GAP) fajada",pantalon:"PAN-008 Azul Oscuro (GAP Chino)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"EXT-004 Café Piel",reloj:"BU2110 — Carátula blanca, piel gris",extra:"—",desc:"Azul claro fajada + azul oscuro. Tonal azul con serraje marrón. Look con profundidad.",lavar:false},
+    {day:"Viernes",style:"viernes",camisa:"CAM-018 Playera Malva (El Ganso)",pantalon:"PAN-006 Jogger Verde Olivo (GAP)",zapatos:"ZAP-002 Converse Blanco Bota",cinturon:"EXT-005 Tejido Negro/Gris",reloj:"Fitbit Sense 2",extra:"—",desc:"Malva + verde olivo + Converse blanco. Combinación inesperada y muy buena.",lavar:true}
+  ]},
+  {label:"Semana 4",subtitle:"Cierre con Personalidad",days:[
+    {day:"Lunes",style:"ejecutivo",camisa:"CAM-002 Camisa Gris (Banana Republic) fajada",pantalon:"PAN-001 Chino Azul Ligero (GAP)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"EXT-003 Negro Piel",reloj:"BU2110 — Carátula blanca, piel gris",extra:"—",desc:"Gris fajada + azul ligero + loafer. Paleta fría limpia.",lavar:false},
+    {day:"Martes",style:"smart",camisa:"CAM-008 Camisa Botella (Zara)",pantalon:"PAN-003 Chino Vino (Ferrioni)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"— (desfajado)",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Verde botella desfajada + vino + serraje. Paleta oscura rica con volumen.",lavar:false},
+    {day:"Miércoles",style:"casual",camisa:"CAM-007 Camisa Negra (H&M) desfajada",pantalon:"PAN-005 Negro Benetton (Recto)",zapatos:"ZAP-005 Serraje Marrón (El Ganso)",cinturon:"— (desfajada)",reloj:"CA0430 — Cronógrafo azul, acero",extra:"—",desc:"Negro total con serraje marrón. Look relajado pero coherente.",lavar:false},
+    {day:"Jueves",style:"elevated",camisa:"CAM-009 Gris Azulado (El Ganso)",pantalon:"PAN-008 Azul Oscuro (GAP Chino)",zapatos:"ZAP-001 Loafer Bordón (Zara)",cinturon:"EXT-003 Negro Piel",reloj:"BU2110 — Carátula blanca, piel gris",extra:"—",desc:"Gris azulado + azul oscuro + loafer + BU2110. Sofisticado con profundidad tonal.",lavar:false},
+    {day:"Viernes",style:"viernes",camisa:"CAM-019 Oversized Azul (Abercrombie)",pantalon:"PAN-006 Jogger Verde Olivo (GAP)",zapatos:"ZAP-002 Converse Blanco Bota",cinturon:"EXT-005 Tejido Negro/Gris",reloj:"Fitbit Sense 2",extra:"—",desc:"Oversized azul + jogger verde olivo + Converse blanco. Viernes streetwear coherente.",lavar:true}
+  ]}
+];
+
+const SL={ejecutivo:"🎯 Ejecutivo",smart:"✨ Smart Casual",casual:"🌿 Casual Intencional",elevated:"🍂 Elevated Casual",viernes:"😎 Viernes"};
+const BC={ejecutivo:"b-ej",smart:"b-sm",casual:"b-ca",elevated:"b-el",viernes:"b-vi"};
+const DC={ejecutivo:"d-ej",smart:"d-sm",casual:"d-ca",elevated:"d-el",viernes:"d-vi"};
+const DAYS=["Lunes","Martes","Miércoles","Jueves","Viernes"];
+
+let startDate=null,selectedWeek=0,modalWeek=0,modalDay=0,selectedSug=null,parsedSuggestions=[],overrides={},swaps={},pantUsos={};
+
+function loadState(){
+  const s=localStorage.getItem('godinStart');
+  if(s){startDate=new Date(s+'T00:00:00');document.getElementById('startDate').value=s;}
+  try{const o=localStorage.getItem('godinOverrides');if(o)overrides=JSON.parse(o);}catch(e){}
+  try{const sw=localStorage.getItem('godinSwaps');if(sw)swaps=JSON.parse(sw);}catch(e){}
+  try{const pu=localStorage.getItem('godinPantUsos');if(pu)pantUsos=JSON.parse(pu);}catch(e){}
+  // Init all pants to 0 if not set
+  WARDROBE.pantalones.forEach(p=>{if(pantUsos[p.id]===undefined)pantUsos[p.id]=0;});
+}
+function saveState(){
+  localStorage.setItem('godinOverrides',JSON.stringify(overrides));
+  localStorage.setItem('godinSwaps',JSON.stringify(swaps));
+  localStorage.setItem('godinPantUsos',JSON.stringify(pantUsos));
+}
+function applyStart(){const v=document.getElementById('startDate').value;if(!v)return;startDate=new Date(v+'T00:00:00');localStorage.setItem('godinStart',v);render();}
+function getCurWeek(){if(!startDate)return 0;const d=Math.floor((new Date()-startDate)/(7*24*3600*1000));return d<0?0:d%4;}
+function getTodayDI(){const d=new Date().getDay();return(d===0||d===6)?-1:d-1;}
+function getWeekDates(off){const t=new Date(),dow=t.getDay(),mon=new Date(t);mon.setDate(t.getDate()-(dow===0?6:dow-1)+off*7);return Array.from({length:5},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});}
+function fmtDate(d){return d.toLocaleDateString('es-MX',{day:'numeric',month:'short'});}
+function getOutfit(wi,di){
+  const order=swaps[`${wi}`]||[0,1,2,3,4];
+  const srcDi=order[di];
+  return overrides[`${wi}-${srcDi}`]||WEEKS[wi].days[srcDi];
+}
+function getOrigDi(wi,di){return(swaps[`${wi}`]||[0,1,2,3,4])[di];}
+
+function render(){
+  document.getElementById('todayBadge').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  renderWeekSelector();renderTodayHero();renderWeekCards();renderPrep();
+}
+function renderWeekSelector(){
+  const sel=document.getElementById('weekSelector');sel.innerHTML='';
+  WEEKS.forEach((w,i)=>{const btn=document.createElement('button');btn.className='week-btn'+(i===selectedWeek?' active':'');btn.textContent=w.label;btn.onclick=()=>{selectedWeek=i;render();};sel.appendChild(btn);});
+}
+function renderTodayHero(){
+  const wi=getCurWeek(),di=getTodayDI();
+  if(di===-1){document.getElementById('todayDayName').textContent='Fin de semana 🎉';document.getElementById('todayStyleBadge').innerHTML='<div class="style-badge b-vi">Planifica tu semana</div>';document.getElementById('todayItems').innerHTML='<div style="color:rgba(255,255,255,.5);font-size:12px;grid-column:1/-1">Revisa el plan y arrastra los días para reorganizar.</div>';document.getElementById('todayDesc').textContent='';return;}
+  if(!startDate){document.getElementById('todayDayName').textContent='Configura tu inicio';document.getElementById('todayStyleBadge').innerHTML='';document.getElementById('todayItems').innerHTML='<div style="color:rgba(255,255,255,.5);font-size:12px;grid-column:1/-1">Ingresa tu fecha de inicio en Foxconn arriba.</div>';document.getElementById('todayDesc').textContent='';return;}
+  const o=getOutfit(wi,di);
+  document.getElementById('todayDayName').textContent=o.day;
+  document.getElementById('todayStyleBadge').innerHTML=`<div class="style-badge ${BC[o.style]}">${SL[o.style]}</div>`;
+  const items=[{icon:'👔',label:'Camisa',val:o.camisa},{icon:'👖',label:'Pantalón',val:o.pantalon},{icon:'👟',label:'Zapatos',val:o.zapatos},{icon:'🪢',label:'Cinturón',val:o.cinturon},{icon:'⌚',label:'Reloj',val:o.reloj},{icon:'✨',label:'Extra',val:o.extra}];
+  document.getElementById('todayItems').innerHTML=items.map(it=>`<div class="t-item"><div class="t-icon">${it.icon}</div><div class="t-label">${it.label}</div><div class="t-val">${it.val}</div></div>`).join('');
+  document.getElementById('todayDesc').textContent=o.desc;
+}
+
+let dragSrcDi=null;
+function renderWeekCards(){
+  const wi=selectedWeek,curWi=getCurWeek(),curDi=getTodayDI(),isCurWeek=wi===curWi;
+  const dates=getWeekDates(wi-curWi);
+  document.getElementById('weekSubtitle').textContent=WEEKS[wi].subtitle;
+  const container=document.getElementById('weekCards');container.innerHTML='';
+  for(let di=0;di<5;di++){
+    const o=getOutfit(wi,di),origDi=getOrigDi(wi,di);
+    const isTod=isCurWeek&&di===curDi,isFri=o.style==='viernes';
+    const hasOv=!!overrides[`${wi}-${origDi}`];
+    const hasSwap=swaps[`${wi}`]&&JSON.stringify(swaps[`${wi}`])!==JSON.stringify([0,1,2,3,4])&&origDi!==di;
+    const card=document.createElement('div');
+    card.className=`day-card${isTod?' today-hl':''}${isFri?' friday':''}`;
+    card.draggable=true;card.dataset.di=di;
+    card.innerHTML=`
+      <div class="day-header">
+        <div class="day-header-left" onclick="toggleCard(this)">
+          <div class="day-name">${DAYS[di]}${isTod?' · Hoy':''}${hasOv?'<span class="applied-tag">✏️</span>':''}${hasSwap?'<span class="swapped-tag">↕️</span>':''}</div>
+          <div class="day-date">${fmtDate(dates[di])} · ${SL[o.style]}</div>
+        </div>
+        <div class="drag-handle" title="Arrastra para mover">☰</div>
+        <div class="style-dot ${DC[o.style]}"></div>
+      </div>
+      <div class="day-body">
+        <div><div class="mini-label">👔 Camisa</div><div class="mini-val">${o.camisa.split('(')[0].trim()}</div></div>
+        <div><div class="mini-label">👖 Pantalón</div><div class="mini-val">${o.pantalon.split('(')[0].trim()}</div></div>
+        <div><div class="mini-label">👟 Zapatos</div><div class="mini-val">${o.zapatos.split('(')[0].trim()}</div></div>
+      </div>
+      <div class="day-extra">
+        <div class="exp-grid">
+          <div><div class="exp-label">🪢 Cinturón</div><div class="exp-val">${o.cinturon}</div></div>
+          <div><div class="exp-label">⌚ Reloj</div><div class="exp-val">${o.reloj}</div></div>
+          ${o.extra!=='—'?`<div style="grid-column:1/-1"><div class="exp-label">✨ Extra</div><div class="exp-val">${o.extra}</div></div>`:''}
+        </div>
+        <div class="day-desc-txt">${o.desc}</div>
+        <div class="lavar-badge ${o.lavar?'lavar-y':'lavar-n'}">${o.lavar?'✅ Lavar este fin de semana':'○ No lavar'}</div>
+        <button class="suggest-btn" onclick="openModal(${wi},${di},event)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Sugerir alternativa para este día
+        </button>
+      </div>`;
+    card.addEventListener('dragstart',e=>{dragSrcDi=di;card.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragend',()=>{card.classList.remove('dragging');document.querySelectorAll('.day-card').forEach(c=>c.classList.remove('drag-over'));});
+    card.addEventListener('dragover',e=>{e.preventDefault();if(dragSrcDi!==null&&dragSrcDi!==di)card.classList.add('drag-over');});
+    card.addEventListener('dragleave',()=>card.classList.remove('drag-over'));
+    card.addEventListener('drop',e=>{
+      e.preventDefault();card.classList.remove('drag-over');
+      if(dragSrcDi===null||dragSrcDi===di)return;
+      const order=swaps[`${wi}`]||[0,1,2,3,4];
+      const newOrder=[...order];
+      [newOrder[dragSrcDi],newOrder[di]]=[newOrder[di],newOrder[dragSrcDi]];
+      swaps[`${wi}`]=newOrder;dragSrcDi=null;saveState();render();
+    });
+    container.appendChild(card);
+  }
+}
+function toggleCard(el){el.closest('.day-card').classList.toggle('open');}
+
+function renderPrep(){
+  const prep={"Con plancha":"CAM-001, 002, 006, 008, 009","Sin plancha":"CAM-003, 004, 007, 010, 017","Doblar":"Polos, playeras, joggers GAP","Zapatos":"ZAP-001 y ZAP-005 → cepillo seco"};
+  let html=Object.entries(prep).map(([c,i])=>`<div class="prep-row"><div class="prep-cat">${c}</div><div class="prep-items">${i}</div></div>`).join('');
+  html+=`<div class="pant-tracker"><div class="pant-tracker-title">👖 Contador de usos — pantalones</div>`;
+  WARDROBE.pantalones.forEach(p=>{
+    const u=pantUsos[p.id]||0,max=p.maxUsos;
+    const pct=u/max;
+    let status,stClass;
+    if(pct>=1){status='🚨 Lavar ya';stClass='st-wash';}
+    else if(pct>=0.66){status='⚠️ Próximo';stClass='st-soon';}
+    else{status='✓ OK';stClass='st-ok';}
+    const dots=Array.from({length:max},(_,i)=>{
+      const cls=i<u?(pct>=1?' warn':' used'):'';
+      return `<div class="use-dot${cls}" title="Uso ${i+1}"></div>`;
+    }).join('');
+    const note=p.restrict?`<span style="font-size:9px;color:var(--slate);margin-left:4px">(${p.restrictNote})</span>`:'';
+    html+=`
+      <div class="pant-row">
+        <div class="pant-top">
+          <div><span class="pant-name">${p.id} ${p.desc}</span>${note}</div>
+          <span class="pant-status ${stClass}">${status}</span>
+        </div>
+        <div class="pant-controls">
+          <div class="use-dots">${dots}</div>
+          <button class="pant-add-btn" onclick="addUso('${p.id}')" ${u>=max?'disabled':''}>+ Uso</button>
+          <button class="pant-wash-btn" onclick="resetUso('${p.id}')">Ya lavé</button>
+        </div>
+      </div>`;
+  });
+  html+=`</div>`;
+  document.getElementById('prepBody').innerHTML=html;
+}
+
+function addUso(id){
+  const p=WARDROBE.pantalones.find(x=>x.id===id);
+  if(pantUsos[id]<p.maxUsos){pantUsos[id]++;saveState();renderPrep();}
+}
+function resetUso(id){
+  pantUsos[id]=0;saveState();renderPrep();
+}
+
+function openModal(wi,di,e){
+  e.stopPropagation();modalWeek=wi;modalDay=di;selectedSug=null;parsedSuggestions=[];
+  const o=getOutfit(wi,di);
+  document.getElementById('modalSub').textContent=`${DAYS[di]} — ${WEEKS[wi].label}`;
+  document.getElementById('modalDayInfo').innerHTML=`<div class="modal-day-name">${DAYS[di]} · ${SL[o.style]}</div><div class="modal-current">👔 ${o.camisa}<br>👖 ${o.pantalon}<br>👟 ${o.zapatos}<br>🪢 ${o.cinturon} · ⌚ ${o.reloj}</div>`;
+  document.getElementById('unavailInput').value='';
+  document.getElementById('suggestionsSection').style.display='none';
+  document.getElementById('sugCards').innerHTML='';
+  document.getElementById('applyBtn').className='apply-btn';
+  document.getElementById('errorMsg').className='error-msg';
+  document.getElementById('loadingDots').className='loading-dots';
+  document.getElementById('genBtn').disabled=false;
+  document.getElementById('modalOverlay').className='modal-overlay open';
+}
+function closeModal(){document.getElementById('modalOverlay').className='modal-overlay';}
+function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+
+async function generateSuggestions(){
+  const unavail=document.getElementById('unavailInput').value.trim();
+  const o=getOutfit(modalWeek,modalDay);
+  const btn=document.getElementById('genBtn'),err=document.getElementById('errorMsg'),dots=document.getElementById('loadingDots');
+  btn.disabled=true;err.className='error-msg';dots.className='loading-dots show';
+  document.getElementById('suggestionsSection').style.display='none';
+  const pantRules=WARDROBE.pantalones.filter(p=>p.restrict).map(p=>`${p.id}: ${p.restrictNote}`).join(', ');
+  const wr=`CAMISAS: ${WARDROBE.camisas.map(c=>c.id+':'+c.desc).join(', ')}\nPANTALONES: ${WARDROBE.pantalones.map(p=>p.id+':'+p.desc).join(', ')}\nCINTURONES: ${WARDROBE.cinturones.map(c=>c.id+':'+c.desc).join(', ')}\nRELOJES: ${WARDROBE.relojes.map(r=>r.id+':'+r.desc).join(', ')}\nREGLAS ESPECIALES PANTALONES: ${pantRules}\nREGLAS GENERALES: Joggers SOLO con Converse. Cinturón café siempre con serraje marrón. No repetir misma camisa días consecutivos.`;
+  const prompt=`Eres asesor de imagen para un profesional mexicano en Foxconn, dress code smart casual.\n\nGUARDAROPA:\n${wr}\n\nOUTFIT ORIGINAL ${DAYS[modalDay]}:\nCamisa: ${o.camisa}\nPantalón: ${o.pantalon}\nZapatos: ${o.zapatos}\nCinturón: ${o.cinturon}\nReloj: ${o.reloj}\n\nNO DISPONIBLE/NO SE ANTOJA: ${unavail||'Generar variaciones interesantes'}\n\nGenera exactamente 3 outfits alternativos respetando todas las reglas. Responde SOLO JSON válido sin backticks:\n{"sugerencias":[{"num":1,"estilo":"nombre creativo","camisa":"id y desc","pantalon":"id y desc","zapatos":"id y desc","cinturon":"desc","reloj":"id y desc","extra":"— o desc","desc":"descripción 1-2 oraciones"},{"num":2},{"num":3}]}`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    const data=await res.json();
+    parsedSuggestions=JSON.parse((data.content?.map(b=>b.text||'').join('')||'').replace(/```json|```/g,'').trim()).sugerencias;
+    renderSuggestions(parsedSuggestions);
+  }catch(e){err.textContent='No se pudo conectar. Verifica tu conexión.';err.className='error-msg show';btn.disabled=false;}
+  finally{dots.className='loading-dots';}
+}
+function renderSuggestions(sugs){
+  const c=document.getElementById('sugCards');c.innerHTML='';
+  sugs.forEach((s,i)=>{
+    const card=document.createElement('div');card.className='sug-card';
+    card.innerHTML=`<div class="sug-num">Opción ${s.num}</div><div class="sug-style">${s.estilo}</div><div class="sug-items"><div><div class="sug-item-label">👔 Camisa</div><div class="sug-item-val">${s.camisa}</div></div><div><div class="sug-item-label">👖 Pantalón</div><div class="sug-item-val">${s.pantalon}</div></div><div><div class="sug-item-label">👟 Zapatos</div><div class="sug-item-val">${s.zapatos}</div></div><div><div class="sug-item-label">🪢 Cinturón</div><div class="sug-item-val">${s.cinturon}</div></div><div><div class="sug-item-label">⌚ Reloj</div><div class="sug-item-val">${s.reloj}</div></div>${s.extra!=='—'?`<div style="grid-column:1/-1"><div class="sug-item-label">✨ Extra</div><div class="sug-item-val">${s.extra}</div></div>`:''}</div><div class="sug-desc">${s.desc}</div>`;
+    card.onclick=()=>{document.querySelectorAll('.sug-card').forEach(c=>c.classList.remove('selected'));card.classList.add('selected');selectedSug=i;document.getElementById('applyBtn').className='apply-btn visible';};
+    c.appendChild(card);
+  });
+  document.getElementById('suggestionsSection').style.display='block';
+  document.getElementById('genBtn').disabled=false;
+}
+function applySelected(){
+  if(selectedSug===null)return;
+  const s=parsedSuggestions[selectedSug],origDi=getOrigDi(modalWeek,modalDay),key=`${modalWeek}-${origDi}`,orig=WEEKS[modalWeek].days[origDi];
+  overrides[key]={day:orig.day,style:orig.style,lavar:orig.lavar,camisa:s.camisa,pantalon:s.pantalon,zapatos:s.zapatos,cinturon:s.cinturon,reloj:s.reloj,extra:s.extra||'—',desc:s.desc};
+  saveState();closeModal();render();
+}
+loadState();render();
+</script>
+</body>
+</html>
